@@ -14,10 +14,15 @@
     /*设置角色*/
     position: relative;
     top: 150px;
-    /*移动角色*/
+    /*设置角色位置*/
 }/* 创建玩家角色 */
 #block{
     width: 20px;
     height: 20px;
     background-color: blue;
+    /*设置墙*/
+    position: relative;
+    top: 130px;
+    left: 480px;
+    /*设置位置*/
 }/* 创建墙 */
