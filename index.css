@@ -25,9 +25,9 @@
     top: 130px;
     left: 480px;
     /*设置位置*/
-    animation: block 1s;
+    animation: block 5s;
 }/* 创建墙 */
 @keyframes block{
-    0%{left:480px;}
-    100%{left:-40px;}
+    0%{left:300px;}
+    100%{left:40px;}
 }
