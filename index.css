@@ -25,9 +25,12 @@
     top: 130px;
     left: 480px;
     /*设置位置*/
-    animation: block 5s;
+    animation: block 1s;
+    /*用1秒完成动画“block”*/
 }/* 创建墙 */
 @keyframes block{
-    0%{left:300px;}
-    100%{left:40px;}
-}
+    0%{left:480px;}
+    /*向左移动至480px处*/
+    100%{left:-40px;}
+    /*向左移动至-40px处*/
+}/*创建动画，命名“block”*/
