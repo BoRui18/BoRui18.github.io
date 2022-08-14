@@ -17,9 +17,12 @@
     position: relative;
     top: 150px;
     /*设置角色位置*/
-    animation: jump 1s infinite;
-    /*用1秒完成动画“jump”，并无限循环*/
 }/* 创建玩家角色 */
+
+.animate{
+    animation: jump 500ms;
+    /*用0.5秒完成动画“jump”*/
+}
 
 @keyframes jump{
     0%{top: 150px;}
