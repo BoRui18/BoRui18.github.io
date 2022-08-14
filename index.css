@@ -2,11 +2,13 @@
     padding: 0;
     margin: 0;
 }/* 设置框架与网页的距离 */
+
 #game{
     width: 500px;
     height: 200px;
     border: 1px solid black;
 }/* 创建游戏框架 */
+
 #character{
     width: 20px;
     height: 50px;
@@ -15,7 +17,17 @@
     position: relative;
     top: 150px;
     /*设置角色位置*/
+    animation: jump 1s infinite;
+    /*用1秒完成动画“jump”，并无限循环*/
 }/* 创建玩家角色 */
+
+@keyframes jump{
+    0%{top: 150px;}
+    30%{top: 100px;}
+    70%{top: 100px;}
+    100%{top: 150px;}
+}/*创建动画，命名“jump”*/
+
 #block{
     width: 20px;
     height: 20px;
@@ -26,8 +38,9 @@
     left: 480px;
     /*设置位置*/
     animation: block 1s infinite linear;
-    /*用1秒完成动画“block”，并无限循环*/
+    /*用1秒完成动画“block”，并无限循环，且速度恒定*/
 }/* 创建墙 */
+
 @keyframes block{
     0%{left:480px;}
     /*向左移动至480px处*/
