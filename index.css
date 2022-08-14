@@ -25,7 +25,7 @@
     top: 130px;
     left: 480px;
     /*设置位置*/
-    animation: block 1s;
+    animation: block 1s infinite;
     /*用1秒完成动画“block”*/
 }/* 创建墙 */
 @keyframes block{
