@@ -8,3 +8,12 @@ function jump(){
         character.classList.remove("animate");
     },500);
 }
+var checkDead = setInterval(function(){
+    var characterTop = parseInt(window.getComputedStyle(character).getPropertyValue("top"));
+    var blockLeft = parseInt(window.getComputedStyle(block).getPropertyValue("left"));
+    if(blockLeck<20 && blockLeft>0 && characterTop>=130){
+        block.style.animation = "none";
+        block.style.display = "none";
+        alert("你输了！");
+    }
+},10);
