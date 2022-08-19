@@ -8,10 +8,6 @@
     height: 200px;
     border: 1px solid black;
     /*设置框架大小*/
-    position: absolute;
-    top: 10px;
-    left: 33%;
-    /*设置框架位置*/
 }/* 创建游戏框架 */
 
 
