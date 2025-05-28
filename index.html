@@ -1,16 +1,213 @@
 <!DOCTYPE html>
-<html lang="en" onclick="jump()" ><!-- 点击屏幕时执行“jump()”跳跃 -->
-
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>跑酷小游戏</title>
-    <link rel="stylesheet" href="index.css"><!-- 将CSS文件加入HTML文件 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>后台管理系统</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="game">
-        <div id="character"></div>
-        <div id="block"></div>
-    </div><!-- 游戏框架 -->
+    <!-- 侧边栏 -->
+    <div class="sidebar" id="sidebar">
+        <div class="logo">
+            <h2>管理后台</h2>
+        </div>
+        <ul class="menu">
+            <li class="menu-item active" data-page="dashboard">
+                <i>📊</i>仪表盘
+            </li>
+            <li class="menu-item" data-page="users">
+                <i>👥</i>用户管理
+            </li>
+            <li class="menu-item" data-page="settings">
+                <i>⚙️</i>系统设置
+            </li>
+            <li class="menu-item" data-page="logs">
+                <i>📝</i>操作日志
+            </li>
+        </ul>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="main-content" id="mainContent">
+        <div class="header">
+            <button class="btn menu-toggle" id="menuToggle">☰</button>
+            <div class="user-info">
+                <div class="user-avatar">A</div>
+                <span>管理员</span>
+                <button class="btn btn-logout" id="logoutBtn">退出</button>
+            </div>
+        </div>
+
+        <!-- 仪表盘页面 -->
+        <div class="page active" id="dashboard">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">系统概览</div>
+                </div>
+                <div class="card-body">
+                    <p>欢迎使用管理系统！今天是 <span id="currentDate"></span></p>
+                    <div class="stats-container">
+                        <div class="stat-card">
+                            <h3>用户总数</h3>
+                            <p class="stat-value" id="userCount">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>今日活跃</h3>
+                            <p class="stat-value">12</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>系统状态</h3>
+                            <p class="stat-value">正常</p>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="activityChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 用户管理页面 -->
+        <div class="page" id="users">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">用户列表</div>
+                    <div>
+                        <input type="text" id="searchUser" placeholder="搜索用户..." class="search-input">
+                        <button class="btn btn-primary" id="addUserBtn">添加用户</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>用户名</th>
+                                <th>邮箱</th>
+                                <th>角色</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userTableBody">
+                            <!-- 用户数据将通过JS动态加载 -->
+                        </tbody>
+                    </table>
+                    <div class="pagination">
+                        <button class="btn" id="prevPage">上一页</button>
+                        <span id="currentPage">1</span>
+                        <button class="btn" id="nextPage">下一页</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 系统设置页面 -->
+        <div class="page" id="settings">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">系统设置</div>
+                </div>
+                <div class="card-body">
+                    <form id="settingsForm">
+                        <div class="form-group">
+                            <label>系统名称</label>
+                            <input type="text" value="管理后台" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>每页显示数量</label>
+                            <select class="form-control">
+                                <option>10</option>
+                                <option selected>20</option>
+                                <option>50</option>
+                                <option>100</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>主题颜色</label>
+                            <div class="theme-selector">
+                                <div class="theme-option theme-blue active" data-theme="blue"></div>
+                                <div class="theme-option theme-green" data-theme="green"></div>
+                                <div class="theme-option theme-purple" data-theme="purple"></div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">保存设置</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 操作日志页面 -->
+        <div class="page" id="logs">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">操作日志</div>
+                    <div>
+                        <input type="date" id="logDateFilter" class="date-filter">
+                        <select id="logTypeFilter" class="form-control">
+                            <option value="all">全部类型</option>
+                            <option value="login">登录</option>
+                            <option value="edit">编辑</option>
+                            <option value="delete">删除</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>时间</th>
+                                <th>操作人</th>
+                                <th>操作内容</th>
+                                <th>IP地址</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logTableBody">
+                            <!-- 日志数据将通过JS动态加载 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加用户模态框 -->
+    <div id="addUserModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>添加用户</h3>
+                <button id="closeModalBtn" class="close-btn">×</button>
+            </div>
+            <form id="userForm">
+                <div class="form-group">
+                    <label>用户名</label>
+                    <input type="text" id="username" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>邮箱</label>
+                    <input type="email" id="email" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>密码</label>
+                    <input type="password" id="password" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>角色</label>
+                    <select id="role" class="form-control">
+                        <option value="admin">管理员</option>
+                        <option value="editor">编辑</option>
+                        <option value="viewer">查看者</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="cancelUserBtn" class="btn">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
 </body>
-<script src="index.js"></script><!-- 将JS文件加入HTML文件 -->
 </html>
