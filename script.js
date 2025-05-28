@@ -1,24 +1,115 @@
-// 模拟用户数据
-let users = [
-    { id: 1, username: 'admin', email: 'admin@example.com', role: '管理员', status: 'active' },
-    { id: 2, username: 'editor1', email: 'editor1@example.com', role: '编辑', status: 'active' },
-    { id: 3, username: 'viewer1', email: 'viewer1@example.com', role: '查看者', status: 'active' },
-    { id: 4, username: 'editor2', email: 'editor2@example.com', role: '编辑', status: 'inactive' },
-    { id: 5, username: 'viewer2', email: 'viewer2@example.com', role: '查看者', status: 'active' },
-    { id: 6, username: 'admin2', email: 'admin2@example.com', role: '管理员', status: 'active' }
-];
+// 数据存储类
+class DataStore {
+    static getUsers() {
+        const users = localStorage.getItem('admin_users');
+        return users ? JSON.parse(users) : [
+            { 
+                id: 1, 
+                username: 'admin', 
+                email: 'admin@example.com', 
+                role: 'admin', 
+                roleName: '管理员',
+                status: 'active',
+                avatar: 'A',
+                password: 'admin123' // 实际应用中应存储哈希值
+            }
+        ];
+    }
 
-// 模拟日志数据
-const logs = [
-    { id: 1, time: '2023-05-15 10:30:22', operator: 'admin', action: '登录系统', ip: '192.168.1.100', type: 'login' },
-    { id: 2, time: '2023-05-15 11:15:45', operator: 'admin', action: '创建用户: editor2', ip: '192.168.1.100', type: 'edit' },
-    { id: 3, time: '2023-05-15 14:20:18', operator: 'admin', action: '修改用户: viewer1 的信息', ip: '192.168.1.100', type: 'edit' },
-    { id: 4, time: '2023-05-15 16:45:30', operator: 'editor1', action: '更新文章: 系统公告', ip: '192.168.1.101', type: 'edit' },
-    { id: 5, time: '2023-05-15 17:30:05', operator: 'admin', action: '删除用户: old_user', ip: '192.168.1.100', type: 'delete' }
-];
+    static saveUsers(users) {
+        localStorage.setItem('admin_users', JSON.stringify(users));
+    }
 
-// DOM元素
-const elements = {
+    static getSettings() {
+        const settings = localStorage.getItem('admin_settings');
+        return settings ? JSON.parse(settings) : {
+            systemName: '后台管理系统',
+            itemsPerPage: 10,
+            theme: 'blue',
+            systemVersion: '1.0.0'
+        };
+    }
+
+    static saveSettings(settings) {
+        localStorage.setItem('admin_settings', JSON.stringify(settings));
+    }
+
+    static getLogs() {
+        const logs = localStorage.getItem('admin_logs');
+        return logs ? JSON.parse(logs) : [
+            { 
+                id: 1, 
+                time: new Date().toLocaleString(), 
+                operator: '系统', 
+                action: '系统初始化', 
+                type: 'system'
+            }
+        ];
+    }
+
+    static saveLogs(logs) {
+        localStorage.setItem('admin_logs', JSON.stringify(logs));
+    }
+
+    static addLog(action, type, operator) {
+        const logs = this.getLogs();
+        const newLog = {
+            id: logs.length > 0 ? Math.max(...logs.map(l => l.id)) + 1 : 1,
+            time: new Date().toLocaleString(),
+            operator: operator || 'admin',
+            action: action,
+            type: type || 'system'
+        };
+        logs.unshift(newLog);
+        this.saveLogs(logs);
+        return newLog;
+    }
+}
+
+// 应用状态管理
+class AppState {
+    constructor() {
+        this.currentUser = null;
+        this.currentPage = 'dashboard';
+        this.userPagination = {
+            currentPage: 1,
+            itemsPerPage: 10
+        };
+        this.logPagination = {
+            currentPage: 1,
+            itemsPerPage: 10
+        };
+    }
+
+    login(user) {
+        this.currentUser = user;
+        DataStore.addLog(`用户登录: ${user.username}`, 'login', user.username);
+        return true;
+    }
+
+    logout() {
+        if (this.currentUser) {
+            DataStore.addLog(`用户退出: ${this.currentUser.username}`, 'login', this.currentUser.username);
+        }
+        this.currentUser = null;
+        return true;
+    }
+
+    isLoggedIn() {
+        return this.currentUser !== null;
+    }
+}
+
+// DOM 元素
+const DOM = {
+    loginContainer: document.getElementById('loginContainer'),
+    adminContainer: document.getElementById('adminContainer'),
+    loginBtn: document.getElementById('loginBtn'),
+    loginUsername: document.getElementById('loginUsername'),
+    loginPassword: document.getElementById('loginPassword'),
+    logoutBtn: document.getElementById('logoutBtn'),
+    currentUser: document.getElementById('currentUser'),
+    userAvatar: document.getElementById('userAvatar'),
     menuToggle: document.getElementById('menuToggle'),
     sidebar: document.getElementById('sidebar'),
     menuItems: document.querySelectorAll('.menu-item'),
@@ -26,11 +117,16 @@ const elements = {
     userCount: document.getElementById('userCount'),
     userTableBody: document.getElementById('userTableBody'),
     addUserBtn: document.getElementById('addUserBtn'),
-    addUserModal: document.getElementById('addUserModal'),
-    closeModalBtn: document.getElementById('closeModalBtn'),
+    userModal: document.getElementById('userModal'),
+    modalTitle: document.getElementById('modalTitle'),
+    closeUserModalBtn: document.getElementById('closeUserModalBtn'),
     cancelUserBtn: document.getElementById('cancelUserBtn'),
     userForm: document.getElementById('userForm'),
+    editUserId: document.getElementById('editUserId'),
     settingsForm: document.getElementById('settingsForm'),
+    systemName: document.getElementById('systemName'),
+    itemsPerPage: document.getElementById('itemsPerPage'),
+    systemVersionInput: document.getElementById('systemVersionInput'),
     searchUser: document.getElementById('searchUser'),
     prevPage: document.getElementById('prevPage'),
     nextPage: document.getElementById('nextPage'),
@@ -38,342 +134,69 @@ const elements = {
     logTableBody: document.getElementById('logTableBody'),
     logDateFilter: document.getElementById('logDateFilter'),
     logTypeFilter: document.getElementById('logTypeFilter'),
-    logoutBtn: document.getElementById('logoutBtn'),
+    logPrevPage: document.getElementById('logPrevPage'),
+    logNextPage: document.getElementById('logNextPage'),
+    logCurrentPage: document.getElementById('logCurrentPage'),
     currentDate: document.getElementById('currentDate'),
-    activityChart: document.getElementById('activityChart')
+    currentDateTime: document.getElementById('currentDateTime'),
+    systemVersion: document.getElementById('systemVersion'),
+    systemStatus: document.getElementById('systemStatus'),
+    recentActivities: document.getElementById('recentActivities')
 };
 
-// 分页状态
-const pagination = {
-    currentPage: 1,
-    itemsPerPage: 5
-};
+// 应用状态
+const appState = new AppState();
 
-// 初始化
-document.addEventListener('DOMContentLoaded', function() {
-    initSystem();
-    renderUserTable();
-    renderLogTable();
-    setupEventListeners();
-});
+// 初始化应用
+function initApp() {
+    // 初始化日期时间
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+    
+    // 加载设置
+    loadSettings();
+    
+    // 绑定事件监听器
+    bindEvents();
+    
+    // 检查登录状态
+    checkLoginState();
+}
 
-function initSystem() {
-    // 设置当前日期
+// 更新日期时间
+function updateDateTime() {
     const now = new Date();
-    elements.currentDate.textContent = now.toLocaleDateString('zh-CN', {
+    DOM.currentDate.textContent = now.toLocaleDateString('zh-CN', {
         year: 'numeric',
         month: 'long',
-        day: 'numeric'
+        day: 'numeric',
+        weekday: 'long'
     });
-    
-    // 更新用户计数
-    elements.userCount.textContent = users.length;
-    
-    // 初始化图表
-    initChart();
-}
-
-function initChart() {
-    const ctx = elements.activityChart.getContext('2d');
-    
-    // 创建渐变
-    const gradient = ctx.createLinearGradient(0, 0, 0, 200);
-    gradient.addColorStop(0, 'rgba(59, 130, 246, 0.6)');
-    gradient.addColorStop(1, 'rgba(59, 130, 246, 0.1)');
-    
-    // 绘制图表
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
-            datasets: [{
-                label: '用户活跃度',
-                data: [120, 190, 140, 220, 180, 150, 210],
-                backgroundColor: gradient,
-                borderColor: '#3b82f6',
-                borderWidth: 2,
-                tension: 0.4,
-                fill: true,
-                pointBackgroundColor: '#fff',
-                pointBorderWidth: 2,
-                pointRadius: 4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.05)'
-                    }
-                },
-                x: {
-                    grid: {
-                        display: false
-                    }
-                }
-            }
-        }
+    DOM.currentDateTime.textContent = now.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
     });
 }
 
-function renderUserTable() {
-    const startIndex = (pagination.currentPage - 1) * pagination.itemsPerPage;
-    const endIndex = startIndex + pagination.itemsPerPage;
-    const usersToShow = users.slice(startIndex, endIndex);
+// 加载设置
+function loadSettings() {
+    const settings = DataStore.getSettings();
+    DOM.systemName.value = settings.systemName;
+    DOM.itemsPerPage.value = settings.itemsPerPage;
+    DOM.systemVersionInput.value = settings.systemVersion;
+    DOM.systemVersion.textContent = settings.systemVersion;
     
-    elements.userTableBody.innerHTML = '';
-    
-    usersToShow.forEach(user => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${user.id}</td>
-            <td>${user.username}</td>
-            <td>${user.email}</td>
-            <td>${user.role}</td>
-            <td><span class="status-badge ${user.status === 'active' ? 'active' : 'inactive'}">
-                ${user.status === 'active' ? '活跃' : '停用'}
-            </span></td>
-            <td>
-                <button class="btn btn-sm btn-primary" onclick="editUser(${user.id})">编辑</button>
-                <button class="btn btn-sm btn-danger" onclick="deleteUser(${user.id})">${user.status === 'active' ? '停用' : '启用'}</button>
-            </td>
-        `;
-        elements.userTableBody.appendChild(tr);
-    });
-    
-    elements.currentPage.textContent = pagination.currentPage;
-}
-
-function renderLogTable() {
-    elements.logTableBody.innerHTML = '';
-    
-    logs.forEach(log => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${log.time}</td>
-            <td>${log.operator}</td>
-            <td>${log.action}</td>
-            <td>${log.ip}</td>
-        `;
-        elements.logTableBody.appendChild(tr);
-    });
-}
-
-function setupEventListeners() {
-    // 菜单切换
-    elements.menuToggle.addEventListener('click', function() {
-        elements.sidebar.classList.toggle('active');
-    });
-    
-    // 菜单项点击
-    elements.menuItems.forEach(item => {
-        item.addEventListener('click', function() {
-            // 移除所有active类
-            elements.menuItems.forEach(i => i.classList.remove('active'));
-            // 给当前点击项添加active类
-            this.classList.add('active');
-            
-            // 切换页面
-            const pageId = this.getAttribute('data-page');
-            switchPage(pageId);
-        });
-    });
-    
-    // 添加用户按钮点击
-    elements.addUserBtn.addEventListener('click', function() {
-        elements.addUserModal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-    });
-    
-    // 关闭模态框
-    elements.closeModalBtn.addEventListener('click', closeModal);
-    elements.cancelUserBtn.addEventListener('click', closeModal);
-    
-    // 用户表单提交
-    elements.userForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        // 获取表单数据
-        const username = document.getElementById('username').value;
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        const role = document.getElementById('role').value;
-        
-        // 创建新用户
-        const newUser = {
-            id: users.length + 1,
-            username,
-            email,
-            role: role === 'admin' ? '管理员' : 
-                  role === 'editor' ? '编辑' : '查看者',
-            status: 'active'
-        };
-        
-        // 添加到用户数组
-        users.push(newUser);
-        
-        // 重新渲染表格
-        renderUserTable();
-        
-        // 更新用户计数
-        elements.userCount.textContent = users.length;
-        
-        // 关闭模态框
-        closeModal();
-        
-        // 重置表单
-        elements.userForm.reset();
-        
-        // 显示成功消息
-        showNotification('用户添加成功！', 'success');
-    });
-    
-    // 设置表单提交
-    elements.settingsForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        showNotification('系统设置已保存！', 'success');
-    });
-    
-    // 用户搜索
-    elements.searchUser.addEventListener('input', function() {
-        const searchTerm = this.value.toLowerCase();
-        if (searchTerm === '') {
-            renderUserTable();
-            return;
-        }
-        
-        const filteredUsers = users.filter(user => 
-            user.username.toLowerCase().includes(searchTerm) || 
-            user.email.toLowerCase().includes(searchTerm) ||
-            user.role.toLowerCase().includes(searchTerm)
-        );
-        
-        // 临时显示搜索结果
-        elements.userTableBody.innerHTML = '';
-        
-        filteredUsers.forEach(user => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${user.id}</td>
-                <td>${user.username}</td>
-                <td>${user.email}</td>
-                <td>${user.role}</td>
-                <td><span class="status-badge ${user.status === 'active' ? 'active' : 'inactive'}">
-                    ${user.status === 'active' ? '活跃' : '停用'}
-                </span></td>
-                <td>
-                    <button class="btn btn-sm btn-primary" onclick="editUser(${user.id})">编辑</button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteUser(${user.id})">${user.status === 'active' ? '停用' : '启用'}</button>
-                </td>
-            `;
-            elements.userTableBody.appendChild(tr);
-        });
-    });
-    
-    // 分页按钮
-    elements.prevPage.addEventListener('click', function() {
-        if (pagination.currentPage > 1) {
-            pagination.currentPage--;
-            renderUserTable();
-        }
-    });
-    
-    elements.nextPage.addEventListener('click', function() {
-        const totalPages = Math.ceil(users.length / pagination.itemsPerPage);
-        if (pagination.currentPage < totalPages) {
-            pagination.currentPage++;
-            renderUserTable();
-        }
-    });
-    
-    // 日志筛选
-    elements.logDateFilter.addEventListener('change', renderLogTable);
-    elements.logTypeFilter.addEventListener('change', renderLogTable);
-    
-    // 退出登录
-    elements.logoutBtn.addEventListener('click', function() {
-        if (confirm('确定要退出系统吗？')) {
-            // 在实际应用中，这里会清除登录状态并重定向
-            showNotification('您已成功退出系统', 'info');
-        }
-    });
-    
-    // 主题选择
+    // 设置主题
     document.querySelectorAll('.theme-option').forEach(option => {
-        option.addEventListener('click', function() {
-            document.querySelectorAll('.theme-option').forEach(opt => {
-                opt.classList.remove('active');
-            });
-            this.classList.add('active');
-            
-            // 在实际应用中，这里会保存主题设置
-            showNotification('主题已切换', 'info');
-        });
-    });
-    
-    // 点击模态框外部关闭
-    window.addEventListener('click', function(e) {
-        if (e.target === elements.addUserModal) {
-            closeModal();
+        option.classList.remove('active');
+        if (option.dataset.theme === settings.theme) {
+            option.classList.add('active');
         }
     });
-}
-
-function switchPage(pageId) {
-    // 隐藏所有页面
-    elements.pages.forEach(page => {
-        page.classList.remove('active');
-    });
     
-    // 显示当前页面
-    document.getElementById(pageId).classList.add('active');
-    
-    // 如果是小屏幕，关闭侧边栏
-    if (window.innerWidth < 768) {
-        elements.sidebar.classList.remove('active');
-    }
-}
-
-function closeModal() {
-    elements.addUserModal.style.display = 'none';
-    document.body.style.overflow = 'auto';
-    elements.userForm.reset();
-}
-
-function editUser(id) {
-    const user = users.find(u => u.id === id);
-    if (user) {
-        // 在实际应用中，这里会打开编辑模态框
-        showNotification(`正在编辑用户: ${user.username}`, 'info');
-    }
-}
-
-function deleteUser(id) {
-    const user = users.find(u => u.id === id);
-    if (user) {
-        const action = user.status === 'active' ? '停用' : '启用';
-        
-        if (confirm(`确定要${action}用户 "${user.username}" 吗？`)) {
-            user.status = user.status === 'active' ? 'inactive' : 'active';
-            renderUserTable();
-            showNotification(`用户 "${user.username}" 已${action}`, 'success');
-        }
-    }
-}
-
-function showNotification(message, type) {
-    // 在实际应用中，这里会显示一个美观的通知
-    alert(message);
-}
-
-// 使函数在全局可访问（实际应用中应该避免）
-window.editUser = editUser;
-window.deleteUser = deleteUser;
+    // 更新分页设置
+    appState.userPagination.itemsPer
